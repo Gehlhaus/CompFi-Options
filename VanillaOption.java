@@ -69,7 +69,7 @@ public class VanillaOption extends Derivative {
 					double intrinsic = strikePrice - n.stockPrice;
 					//System.out.println("n.price = " + n.price + ", intrinsic = " + intrinsic);
 					if(intrinsic > n.price) {
-						System.out.println("INTRINSICCC");
+						//System.out.println("INTRINSICCC  " + n.t);
 						//System.out.println("overriding price, n.t = " + n.t);
 						n.price = intrinsic;
 						n.fugit = n.t;
