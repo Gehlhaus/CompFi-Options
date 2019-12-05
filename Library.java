@@ -3,39 +3,35 @@ package Project;
 public final class Library {
 	//Computes the Fair-Value(FV) and Fugit of a derivative
 	static Output binom(final Derivative deriv, final MarketData mkt, int n) {
-		Output out = new Output();
-		
-		Node[][] nodes = new Node[n+1][];
-		
-		for(int i=0; i<nodes.length; i++){
-			nodes[i] = new Node[i+1];
-		}
-		
 		double deltaT = ((deriv.T-mkt.t0)/n);
 		double u = Math.pow(Math.E, (mkt.sigma * Math.sqrt(deltaT)));
 		double d = 1.0/u;
 		double p = (Math.pow(Math.E, mkt.r * deltaT) - d)/(u - d);
 		double q = 1 - p;
 		double erDeltaT = Math.pow(Math.E, (mkt.r * deltaT));
+		Output out = new Output();
+		Node[][] nodes = new Node[n+1][];
 		
+		//Initialize Node 2d array
 		for(int i=0; i<nodes.length; i++){
+			nodes[i] = new Node[i+1];
+		}
+		
+		//Create Nodes, Assign stock prices, Assign isLeaf, Set Children 
+		for(int i=nodes.length-1; i>=0; i--){
 			for(int j=0; j<nodes[i].length; j++){
 				nodes[i][j] = new Node(p, q, erDeltaT, deltaT);
 				int value = i-(2*j);
 				if(value == 0) nodes[i][j].stockPrice = mkt.S;
 				else if(value > 0) nodes[i][j].stockPrice = mkt.S * Math.pow(u, value);
 				else if(value < 0) nodes[i][j].stockPrice = mkt.S * Math.pow(d, Math.abs(value));
-			}
-		}
-
-		for(int i=0; i<nodes[nodes.length-1].length; i++) {
-			nodes[nodes.length-1][i].isLeaf = true;
-			nodes[nodes.length-1][i].isLeaf = true;
-		}
-		for(int i=nodes.length-2; i>=0; i--) {
-			for(int j=0; j<nodes[i].length; j++) {
-				nodes[i][j].uChild = nodes[i+1][j];
-				nodes[i][j].dChild = nodes[i+1][j+1];
+				if(i == nodes.length - 1) {
+					nodes[i][j].isLeaf = true;
+				}
+				else {
+					nodes[i][j].uChild = nodes[i+1][j];
+					nodes[i][j].dChild = nodes[i+1][j+1];
+				}
 			}
 		}
 			
@@ -45,8 +41,9 @@ public final class Library {
 			}
 		}
 		deriv.terminalCondition(nodes[0][0]);
-		out.FV = nodes[0][0].price;
 		
+		out.FV = nodes[0][0].price;
+				
 		print(nodes);
 		
 		return out;
