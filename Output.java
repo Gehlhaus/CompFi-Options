@@ -1,5 +1,3 @@
-package Project;
-
 public final class Output {
 	public double FV;		//Fair-Value
 	public double fugit;	//fugit value

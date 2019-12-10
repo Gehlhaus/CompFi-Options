@@ -1,5 +1,3 @@
-package Project;
-
 public final class MarketData {
 	public double Price;	//Market price of security
 	public double S;		//Stock price

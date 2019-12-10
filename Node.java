@@ -1,5 +1,3 @@
-package Project;
-
 public final class Node {
 	double stockPrice, price, fugit, t;
 	double p ,q;

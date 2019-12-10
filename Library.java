@@ -1,8 +1,7 @@
-package Project;
-
 public final class Library {
 	//Computes the Fair-Value(FV) and Fugit of a derivative
-	static Output binom(final Derivative deriv, final MarketData mkt, int n) {
+	static Output binom(final Derivative deriv, final MarketData mkt, int n, boolean print) {
+		//System.out.println("Calculating FV with SIGMA: " + mkt.sigma);
 		double deltaT = ((deriv.T-mkt.t0)/n);
 		double u = Math.pow(Math.E, (mkt.sigma * Math.sqrt(deltaT)));
 		double d = 1.0/u;
@@ -18,8 +17,8 @@ public final class Library {
 		}
 		
 		//Create Nodes, Assign stock prices, Assign isLeaf, Set Children 
-		for(int i=nodes.length-1; i>=0; i--){
-			for(int j=0; j<nodes[i].length; j++){
+		for(int i=nodes.length-1; i>=0; i--) {
+			for(int j=0; j<nodes[i].length; j++) {
 				nodes[i][j] = new Node(p, q, erDeltaT, deltaT);
 				int value = i-(2*j);
 				if(value == 0) nodes[i][j].stockPrice = mkt.S;
@@ -27,24 +26,33 @@ public final class Library {
 				else if(value < 0) nodes[i][j].stockPrice = mkt.S * Math.pow(d, Math.abs(value));
 				if(i == nodes.length - 1) {
 					nodes[i][j].isLeaf = true;
+					nodes[i][j].t = deriv.T;
 				}
 				else {
 					nodes[i][j].uChild = nodes[i+1][j];
 					nodes[i][j].dChild = nodes[i+1][j+1];
+					nodes[i][j].t = nodes[i][j].deltaT * i;
 				}
 			}
 		}
 			
-		for(int i=nodes.length-1; i>0; i--) {
+		for(int i=nodes.length - 1; i>=0; i--) {
 			for(int j=0; j<nodes[i].length; j++) {
-				deriv.valuationTest(nodes[i][j]);
+				if(i == nodes.length - 1){
+					deriv.terminalCondition(nodes[i][j]);
+				}
+				else { 
+					deriv.valuationTest(nodes[i][j]); 
+				}
 			}
-		}
-		deriv.terminalCondition(nodes[0][0]);
-		
+		}		
 		out.FV = nodes[0][0].price;
+		out.fugit = nodes[0][0].fugit;
+		//System.out.println("FV for sigma: " + mkt.sigma + " = " + out.FV);
 				
-		print(nodes);
+		if(print){
+			print(nodes);
+		}
 		
 		return out;
 	}
@@ -53,13 +61,42 @@ public final class Library {
 	static int impvol(final Derivative deriv, final MarketData mkt, int n, int max_iter, double tol, Output out) {
 		//low 1% high 200%
 		int counter = 0;
-		double temp, vLow = .01, vHigh = 2.0;
+		double temp, FV, vLow = .01, vHigh = 2.0;
 		while(counter < max_iter) {
+			//System.out.println("Iteration " + counter + ": vLow = " + vLow + ", vHigh = " + vHigh);
+			//Check vLow
+			mkt.sigma = vLow;
+			FV = binom(deriv, mkt, n, false).FV;
+			//System.out.println("FV for sigma: " + vLow + " = " + FV);
+			double lowDiff = FV - mkt.Price;
+			//System.out.println("Low Diff = " + lowDiff);
+			if(Math.abs(lowDiff) <= tol){
+				out.impvol = vLow;
+				out.num_iter = counter;
+				return 0;
+			}
+			//Check vHigh
+			mkt.sigma = vHigh;
+			FV = binom(deriv, mkt, n, false).FV;
+			double highDiff = FV - tol;
+			//System.out.println("High Diff = " + highDiff);
+			if(Math.abs(highDiff) <= tol){
+				out.impvol = vLow;
+				out.num_iter = counter;
+				return 0;
+			}
 			
-			counter++;
-			out.num_iter = counter;
-			out.impvol = vLow;
-			return 0; 	//Success	
+			temp = (vLow + vHigh)/2.0;
+			mkt.sigma = temp;
+			FV = binom(deriv, mkt, n, false).FV;
+			double tempDiff = FV - mkt.Price;
+			if(tempDiff < 0){
+				vLow = temp;
+			}
+			else {
+				vHigh = temp;
+			}
+			counter++;	
 		}
 		out.num_iter = 0;
 		out.impvol = 0;
