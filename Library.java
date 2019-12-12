@@ -8,6 +8,11 @@ public final class Library {
 		double p = (Math.pow(Math.E, mkt.r * deltaT) - d)/(u - d);
 		double q = 1 - p;
 		double erDeltaT = Math.pow(Math.E, (mkt.r * deltaT));
+		
+		deriv.p = p;
+		deriv.q = q;
+		deriv.erDeltaT = erDeltaT;
+		
 		Output out = new Output();
 		Node[][] nodes = new Node[n+1][];
 		
@@ -19,7 +24,7 @@ public final class Library {
 		//Create Nodes, Assign stock prices, Assign isLeaf, Set Children 
 		for(int i=nodes.length-1; i>=0; i--) {
 			for(int j=0; j<nodes[i].length; j++) {
-				nodes[i][j] = new Node(p, q, erDeltaT, deltaT);
+				nodes[i][j] = new Node();
 				int value = i-(2*j);
 				if(value == 0) nodes[i][j].stockPrice = mkt.S;
 				else if(value > 0) nodes[i][j].stockPrice = mkt.S * Math.pow(u, value);
@@ -27,11 +32,13 @@ public final class Library {
 				if(i == nodes.length - 1) {
 					nodes[i][j].isLeaf = true;
 					nodes[i][j].t = deriv.T;
+					//System.out.println(nodes[i][j].t);
 				}
 				else {
 					nodes[i][j].uChild = nodes[i+1][j];
 					nodes[i][j].dChild = nodes[i+1][j+1];
-					nodes[i][j].t = nodes[i][j].deltaT * i;
+					nodes[i][j].t = deltaT * i;
+					//System.out.println(nodes[i][j].deltaT * i);
 				}
 			}
 		}

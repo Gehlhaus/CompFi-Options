@@ -1,5 +1,5 @@
 public abstract class Derivative {
-	public double T;
+	double T, p, q, erDeltaT, strike;
 	public void terminalCondition(Node n) {}
 	public void valuationTest(Node n) {}
 }
